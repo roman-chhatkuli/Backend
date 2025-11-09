@@ -17,7 +17,8 @@ export const db = drizzle(sql, {
 const app = new Hono()
 
 app.use("/*",cors({
-  origin: 'https://frontend-ue61rxezvo9arcsbqsa87rkp-5173.thekalkicinematicuniverse.com' 
+  origin: 'https://frontend-cndl5fsznagfbiwj7fq8rztf-5173.thekalkicinematicuniverse.com',
+  credentials: true,
 }))
 
 app.route("/student", studentRoute) 

@@ -8,6 +8,13 @@
       "when": 1762429471540,
       "tag": "0000_cynical_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762668981890,
+      "tag": "0001_nappy_paladin",
+      "breakpoints": true
     }
   ]
 }
