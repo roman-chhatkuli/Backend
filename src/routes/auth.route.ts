@@ -14,10 +14,8 @@ const authLoginSchema = z.object({
   password: z.string().min(6),
 })
 
-const authSignUpSchema = z.object({
+const authSignUpSchema = authLoginSchema.extend({
   name: z.string().min(5),
-  email: z.string().email(),
-  password: z.string().min(6),
 })
 
 authRouter.post('/login', async (c) => {
@@ -42,16 +40,25 @@ authRouter.post('/login', async (c) => {
     return c.json({ message: 'Invalid credentials', success: false }, 401)
   }
 
-  const token = jwt.sign({ email: foundUser.email }, process.env.JWT_SECRET, { expiresIn: '10h' })
+  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '5m' })
 
-  setCookie(c, 'token', token, {
+  const refreshToken = jwt.sign({ email: foundUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
+
+  setCookie(c, 'accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 36000,
+    maxAge: 5*60,
   })
 
-  return c.json({ message: 'Login successful', success: true }, 200)
+  setCookie(c, 'refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 5 * 24 * 60 * 60,
+  })
+
+  return c.json({ message: 'Login successful', success: true, user: foundUser.email }, 200)
 })
 
 authRouter.post('/signup', async (c) => {
@@ -78,33 +85,51 @@ authRouter.post('/signup', async (c) => {
     password: hashedPassword,
   })
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '10h' })
-  setCookie(c, 'token', token, {
+  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '5m' })
+
+  const refreshToken = jwt.sign({ email: foundUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
+
+  setCookie(c, 'accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 36000,
+    maxAge: 5 * 60,
   })
 
-  return c.json({ message: 'Signup successful', success: true }, 201)
+  setCookie(c, 'refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 5 * 24 * 60 * 60,
+  })
+
+  return c.json({ message: 'Signup successful', success: true, user: email }, 201)
 })
 
+
+
 authRouter.post('/logout', async (c) => {
-  deleteCookie(c, 'token')
+  deleteCookie(c, 'accessToken')
+  deleteCookie(c, 'refreshToken')
   return c.json({ message: 'Logout successful', success: true }, 201)
 })
 
-authRouter.get("/profile", async (c) => {
-  const token = getCookie(c, 'token')
 
-  if(!token) {
+
+authRouter.get("/profile", async (c) => {
+  const accessToken = getCookie(c, 'accessToken')
+
+  if (!accessToken) {
     return c.json({ message: 'Unauthorized', success: false }, 401)
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET)
+  try {
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET)
+    return c.json({ message: 'Profile fetched successfully', success: true, email: decoded.email }, 200)
+  } catch (e) {
+    return c.json({ message: 'Invalid or expired token', success: false }, 401)
+  }
 
-  console.log("Decoded", decoded)
-  return c.json({ message: 'Profile fetched successfully', success: true, email: decoded.email }, 200)
 })
 
 export default authRouter
