@@ -40,7 +40,7 @@ authRouter.post('/login', async (c) => {
     return c.json({ message: 'Invalid credentials', success: false }, 401)
   }
 
-  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '5m' })
+  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '15m' })
 
   const refreshToken = jwt.sign({ email: foundUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
 
