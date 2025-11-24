@@ -40,7 +40,7 @@ authRouter.post('/login', async (c) => {
     return c.json({ message: 'Invalid credentials', success: false }, 401)
   }
 
-  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '15m' })
+  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '1d' })
 
   const refreshToken = jwt.sign({ email: foundUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
 
@@ -48,7 +48,7 @@ authRouter.post('/login', async (c) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 5*60,
+    maxAge: 24*60*60,
   })
 
   setCookie(c, 'refreshToken', refreshToken, {
@@ -85,15 +85,15 @@ authRouter.post('/signup', async (c) => {
     password: hashedPassword,
   })
 
-  const accessToken = jwt.sign({ email: foundUser.email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '5m' })
+  const accessToken = jwt.sign({ email }, process.env.JWT_ACCESS_SECRET, { expiresIn: '1d' })
 
-  const refreshToken = jwt.sign({ email: foundUser.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
+  const refreshToken = jwt.sign({ email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '3d' })
 
   setCookie(c, 'accessToken', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 5 * 60,
+    maxAge: 24*60*60,
   })
 
   setCookie(c, 'refreshToken', refreshToken, {
@@ -124,7 +124,7 @@ authRouter.get("/profile", async (c) => {
   }
 
   try {
-    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET)
+    const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET)
     return c.json({ message: 'Profile fetched successfully', success: true, email: decoded.email }, 200)
   } catch (e) {
     return c.json({ message: 'Invalid or expired token', success: false }, 401)
