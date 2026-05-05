@@ -15,9 +15,11 @@ export const db = drizzle(sql, {
 }) 
 
 const app = new Hono()
+const port = Number(process.env.PORT ?? 3000)
+const corsOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173'
 
 app.use("/*",cors({
-  origin: 'https://frontend-rxx2wco9szkr95n846mq49kv-5173.thekalkicinematicuniverse.com',
+  origin: corsOrigin,
   credentials: true,
 }))
 
@@ -30,7 +32,7 @@ app.get("/", (c) => {
 
 serve({
   fetch: app.fetch,
-  port: 3000
+  port
 }, (info) => {
   console.log(`Server is running on port:${info.port}`)
 })
